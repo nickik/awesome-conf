@@ -7,13 +7,13 @@ require("beautiful")
 -- Notification library
 require("naughty")
 require("vicious")
-require("rodentbane")
+-- require("rodentbane")
 
 -- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
 beautiful.init("/usr/share/awesome/themes/default/theme.lua")
 
-theme.wallpaper_cmd = { "awsetbg /home/nick/alltech/Allgemein_Programming/Clojure" }
+theme.wallpaper_cmd = { "awsetbg /home/nick/alltech/Allgemein_Programming/Clojure/clojure.png" }
 
 -- This is used later as the default terminal and editor to run.
 terminal = "urxvt"
