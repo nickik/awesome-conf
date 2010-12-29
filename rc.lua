@@ -39,7 +39,7 @@ layouts =
  -- {{{ Tags
  -- Define a tag table which will hold all screen tags.
  tags = {
-   names  = { "main", "www", "programming", "X-Chat", 5, "6  :: CPU"},
+   names  = { "main", "www", "programming", "X-Chat", 5, "6"},
    layout = { layouts[1], layouts[2], layouts[3], layouts[1], layouts[1], layouts[1]
  }}
  for s = 1, screen.count() do
@@ -94,7 +94,7 @@ function battery_status ()
         end --even more data unavailable: we might be getting an unexpected output format, so let's just skip this line.
         line=fd:read() --read next line
     end
-    return table.concat(output," ") --FIXME: better separation for several batteries. maybe a pipe?
+    return table.concat(output," :: ") 
 end
 mybattmon.text = " " .. battery_status() .. " "
 my_battmon_timer=timer({timeout=30})
@@ -106,29 +106,29 @@ my_battmon_timer:start()
 
 -- Internet widget
 
-myfoo = widget({type = "textbox", name = "Internet VPN"})
+mynet= widget({type = "textbox", name = "Internet VPN"})
 
 function iss (IP_range)
-	local IP
-	--
-	c = cURL.easy_init()
-	c:setopt_url("www.icanhazip.com")
-	c:perform({writefunction = function(str)
-					 IP = str
-				     end})
-	
-	if string.find(IP, IP_range) then
-		return "<span color=\"#556B2F\">  VPN " .. IP .. "</span>" 
-	--else
-	--	if IP then
-	--		return "<span color\"#DAA520\"> Internet".. IP .. "</span>"
-	--	else
-	--		return "<span color=\"#EE6363\"> Offline </span>"
-	--	end
+	local fd = io.popen("~/.config/awesome/checknet", "r")
+	local line = fd:read()
+	if string.find(line, "Offline") then
+		return "<span color=\"#EE6363\">" .. line  .. "</span>"
+	end
+	if string.find(line, "Internet") then
+		return "<span color=\"#DAA520\">".. line .. "</span>"
+	end
+	if string.find(line, "VPN") then
+		return "<span color=\"#556B2F\">" ..  line .. "</span>" 
 	end
 end
+mynet.text = iss()
+my_net_timer=timer({timeout=10})
+my_net_timer:add_signal("timeout", function()
+    mynet.text = iss()
+end)
+my_net_timer:start()
 
-myfoo.text = iss("80.190")
+
 
 -- my double point widget
 mydp = widget({ type = "textbox" })
@@ -145,6 +145,10 @@ datewidget = widget({ type = "textbox" })
 vicious.register(datewidget, vicious.widgets.date, "%b %d, %R", 60)
 
 -- Initialize widget
+
+textcpuwidget = widget({type = "textbox"})
+textcpuwidget.text = "CPU "
+
 cpuwidget = awful.widget.graph()
 -- Graph properties
 cpuwidget:set_width(50)
@@ -225,11 +229,11 @@ for s = 1, screen.count() do
         {
             mylauncher,
             mytaglist[s],
-            mypromptbox[s],
-			cpuwidget,mydp,
+            mypromptbox[s], mydp,
+			textcpuwidget, cpuwidget,mydp,
 			memwidget2,mydp,
 			mybattmon,mydp,
-			myfoo, mydp,
+			mynet, mydp,
             layout = awful.widget.layout.horizontal.leftright
         },
         mylayoutbox[s],
