@@ -7,7 +7,7 @@ require("beautiful")
 -- Notification library
 require("naughty")
 require("vicious")
--- require("rodentbane")
+require("cURL")
 
 -- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
@@ -39,7 +39,7 @@ layouts =
  -- {{{ Tags
  -- Define a tag table which will hold all screen tags.
  tags = {
-   names  = { "main", "www", "programming", "X-Chat", 5, "6   CPU:"},
+   names  = { "main", "www", "programming", "X-Chat", 5, "6  :: CPU"},
    layout = { layouts[1], layouts[2], layouts[3], layouts[1], layouts[1], layouts[1]
  }}
  for s = 1, screen.count() do
@@ -68,7 +68,73 @@ mylauncher = awful.widget.launcher({ image = image(beautiful.awesome_icon),
 
 -- {{{ Wibox
 
--- Initialize widget
+-- battery widget
+
+mybattmon = widget({ type = "textbox", name = "mybattmon", align = "right" })
+function battery_status ()
+    local output={} --output buffer
+    local fd=io.popen("acpitool -b", "r") --list present batteries
+    local line=fd:read()
+    while line do --there might be several batteries.
+        local battery_num = string.match(line, "Battery \#(%d+)")
+        local battery_load = string.match(line, " (%d*\.%d+)%%")
+        local time_rem = string.match(line, "(%d+\:%d+)\:%d+")
+	local discharging
+	if string.match(line, "discharging")=="discharging" then --discharging: always red
+		discharging="<span color=\"#EE6363\">"
+	elseif tonumber(battery_load)>85 then --almost charged
+		discharging="<span color=\"#556B2F\">"
+	else --charging
+		discharging="<span color=\"#DAA520\">"
+	end
+        if battery_num and battery_load and time_rem then
+            table.insert(output,discharging.."BAT#"..battery_num.." "..battery_load.."% "..time_rem.."</span>")
+        elseif battery_num and battery_load then --remaining time unavailable
+            table.insert(output,discharging.."BAT#"..battery_num.." "..battery_load.."%</span>")
+        end --even more data unavailable: we might be getting an unexpected output format, so let's just skip this line.
+        line=fd:read() --read next line
+    end
+    return table.concat(output," ") --FIXME: better separation for several batteries. maybe a pipe?
+end
+mybattmon.text = " " .. battery_status() .. " "
+my_battmon_timer=timer({timeout=30})
+my_battmon_timer:add_signal("timeout", function()
+    --mytextbox.text = " " .. os.date() .. " "
+    mybattmon.text = " " .. battery_status() .. " "
+end)
+my_battmon_timer:start()
+
+-- Internet widget
+
+myfoo = widget({type = "textbox", name = "Internet VPN"})
+
+function iss (IP_range)
+	local IP
+	--
+	c = cURL.easy_init()
+	c:setopt_url("www.icanhazip.com")
+	c:perform({writefunction = function(str)
+					 IP = str
+				     end})
+	
+	if string.find(IP, IP_range) then
+		return "<span color=\"#556B2F\">  VPN " .. IP .. "</span>" 
+	--else
+	--	if IP then
+	--		return "<span color\"#DAA520\"> Internet".. IP .. "</span>"
+	--	else
+	--		return "<span color=\"#EE6363\"> Offline </span>"
+	--	end
+	end
+end
+
+myfoo.text = iss("80.190")
+
+-- my double point widget
+mydp = widget({ type = "textbox" })
+mydp.text = " :: "
+
+-- memory widget
 memwidget2 = widget({ type = "textbox" })
 -- Register widget
 vicious.register(memwidget2, vicious.widgets.mem, " Memory: $1%", 13)
@@ -160,8 +226,10 @@ for s = 1, screen.count() do
             mylauncher,
             mytaglist[s],
             mypromptbox[s],
-			cpuwidget,
-			memwidget2,
+			cpuwidget,mydp,
+			memwidget2,mydp,
+			mybattmon,mydp,
+			myfoo, mydp,
             layout = awful.widget.layout.horizontal.leftright
         },
         mylayoutbox[s],
