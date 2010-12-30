@@ -7,13 +7,12 @@ require("beautiful")
 -- Notification library
 require("naughty")
 require("vicious")
-require("cURL")
 
 -- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
-beautiful.init("/usr/share/awesome/themes/default/theme.lua")
+beautiful.init("/home/nick/.config/awesome/theme.lua")
 
-theme.wallpaper_cmd = { "awsetbg /home/nick/alltech/Allgemein_Programming/Clojure/clojure.png" }
+-- theme.wallpaper_cmd = { "awsetbg /home/nick/alltech/Allgemein_Programming/Clojure/clojure.png" }
 
 -- This is used later as the default terminal and editor to run.
 terminal = "urxvt"
@@ -68,6 +67,12 @@ mylauncher = awful.widget.launcher({ image = image(beautiful.awesome_icon),
 
 -- {{{ Wibox
 
+-- net up and down load widget
+ netwidget = widget({ type = "textbox" })
+ -- Register widget
+ vicious.register(netwidget, vicious.widgets.net, 'NET: <span color="#EE6363">${eth0 down_kb}</span> <span color="#556B2F">${eth0 up_kb}</span> kB/s ', 3)
+
+
 -- battery widget
 
 mybattmon = widget({ type = "textbox", name = "mybattmon", align = "right" })
@@ -94,7 +99,7 @@ function battery_status ()
         end --even more data unavailable: we might be getting an unexpected output format, so let's just skip this line.
         line=fd:read() --read next line
     end
-    return table.concat(output," :: ") 
+    return table.concat(output,"|") 
 end
 mybattmon.text = " " .. battery_status() .. " "
 my_battmon_timer=timer({timeout=30})
@@ -104,12 +109,27 @@ my_battmon_timer:add_signal("timeout", function()
 end)
 my_battmon_timer:start()
 
+
+
+-- mpd widget
+mpdwidget = widget({ type = "textbox" })
+-- Register widget
+vicious.register(mpdwidget, vicious.widgets.mpd,
+    function (widget, args)
+        if args["{state}"] == "Stop" then 
+            return " - "
+        else 
+            return args["{Artist}"]..' - '.. args["{Title}"]
+        end
+    end, 10)
+
+
 -- Internet widget
 
 mynet= widget({type = "textbox", name = "Internet VPN"})
 
 function iss (IP_range)
-	local fd = io.popen("~/.config/awesome/checknet", "r")
+	local fd = io.popen("~/.config/awesome/checknet.sh", "r")
 	local line = fd:read()
 	if string.find(line, "Offline") then
 		return "<span color=\"#EE6363\">" .. line  .. "</span>"
@@ -128,18 +148,32 @@ my_net_timer:add_signal("timeout", function()
 end)
 my_net_timer:start()
 
-
+-- MPD
+mympd = widget({type = "textbox"})
+mympd.text = "MPD: "
 
 -- my double point widget
 mydp = widget({ type = "textbox" })
-mydp.text = " :: "
+mydp.text = " | "
 
 -- memory widget
 memwidget2 = widget({ type = "textbox" })
 -- Register widget
-vicious.register(memwidget2, vicious.widgets.mem, " Memory: $1%", 13)
+vicious.register(memwidget2, vicious.widgets.mem, " RAM: $1%", 13)
 
--- Initialize widget
+
+-- Volume widget
+volwidget = widget({ type = "textbox" })
+vicious.register(volwidget, vicious.widgets.volume, " $1% ", 2, "Master")
+
+volwidget:buttons(awful.util.table.join(
+    awful.button({ }, 1, function () awful.util.spawn("amixer -q set Master toggle", false) end),
+    awful.button({ }, 3, function () awful.util.spawn("urxvt -e alsamixer", true) end),
+    awful.button({ }, 4, function () awful.util.spawn("amixer -q set Master 1dB+", false) end),
+    awful.button({ }, 5, function () awful.util.spawn("amixer -q set Master 1dB-", false) end)
+))
+
+-- date widget
 datewidget = widget({ type = "textbox" })
 -- Register widget
 vicious.register(datewidget, vicious.widgets.date, "%b %d, %R", 60)
@@ -147,12 +181,12 @@ vicious.register(datewidget, vicious.widgets.date, "%b %d, %R", 60)
 -- Initialize widget
 
 textcpuwidget = widget({type = "textbox"})
-textcpuwidget.text = "CPU "
+textcpuwidget.text = "CPU: "
 
 cpuwidget = awful.widget.graph()
 -- Graph properties
 cpuwidget:set_width(50)
-cpuwidget:set_background_color("#494B4F")
+cpuwidget:set_background_color("#000000")
 cpuwidget:set_color("#FF5656")
 cpuwidget:set_gradient_colors({ "#FF5656", "#88A175", "#AECF96" })
 -- Register widget
@@ -233,7 +267,8 @@ for s = 1, screen.count() do
 			textcpuwidget, cpuwidget,mydp,
 			memwidget2,mydp,
 			mybattmon,mydp,
-			mynet, mydp,
+			netwidget, mynet, mydp,
+			mympd, mpdwidget, volwidget, mydp,
             layout = awful.widget.layout.horizontal.leftright
         },
         mylayoutbox[s],
