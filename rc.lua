@@ -343,7 +343,8 @@ globalkeys = awful.util.table.join(
                   mypromptbox[mouse.screen].widget,
                   awful.util.eval, nil,
                   awful.util.getdir("cache") .. "/history_eval")
-              end)
+              end),
+	awful.key({"Control", "Shift"}, "Delete", function () awful.util.spawn("slock") end)
 )
 
 clientkeys = awful.util.table.join(
