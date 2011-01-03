@@ -51,7 +51,7 @@ shifty.config.tags = {
 -- client settings
 -- order here matters, early rules will be applied first
 shifty.config.apps = {
-         { match = { "Vimperator","Firefox","Iceweasel"} , tag = "web" },
+         { match = { "Vimperator","Firefox","Namoroka"} , tag = "web" },
          { match = { "xterm", "urxvt"} ,  tag = "main" },
 		 { match = { "emacs" }, tag = "Code" },
 		 { match = { "XChat" }, tag = "XChat" },
