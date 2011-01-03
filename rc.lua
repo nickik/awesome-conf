@@ -1,5 +1,3 @@
-
-
 -- Standard awesome library
 require("awful")
 require("awful.autofocus")
@@ -34,8 +32,7 @@ modkey = "Mod4"
 layouts =
 {
     awful.layout.suit.tile,
-    awful.layout.suit.tile.top,
-    awful.layout.suit.fair.horizontal,
+    awful.layout.suit.tile.bottom,
     awful.layout.suit.max
 }
 
@@ -43,21 +40,32 @@ layouts =
 -- {{{ Shifty configuration
 -- tag settings
 shifty.config.tags = {
-    ["term"] = { position = 1, exclusive = true, spawn = terminal, },
-    ["web"]  = { position = 2, exclusive = true, spawn = browser, layout = awful.layout.suit.max, },
+    ["main"] = { position = 1, exclusive = true, spawn = terminal, layout = layouts[1]},
+    ["web"]  = { position = 2, exclusive = true, spawn = browser,  layout = layouts[3] },
+	["XChat"]  = { position = 4,  nopopup = true , layout = layouts[3]},
+	["Code"]  = { position = 3,  nopopup = true ,  layout = layouts[3]},
+    ["gimp"] = { position = 5, exclusive = true, nopopup = true, spawn = gimp,  },
+	["media"]= { layout = awful.layout.suit.floating },
 }
 
 -- client settings
 -- order here matters, early rules will be applied first
 shifty.config.apps = {
-         { match = { "Navigator","Vimperator","Gran Paradiso","Firefox","Iceweasel"} , tag = "web" } ,
-         { match = { "xterm", "urxvt"} , honorsizehints = false, slave = true, tag = "term" } ,
-         { match = { "pcmanfm" }, slave = true } ,
-         { match = { "" }, buttons = {
-                             button({ }, 1, function (c) client.focus = c; c:raise() end),
-                             button({ modkey }, 1, function (c) awful.mouse.client.move() end),
-                             button({ modkey }, 3, awful.mouse.client.resize ), }, },
+         { match = { "Vimperator","Firefox","Iceweasel"} , tag = "web" },
+         { match = { "xterm", "urxvt"} ,  tag = "main" },
+		 { match = { "emacs" }, tag = "Code" },
+		 { match = { "XChat" }, tag = "XChat" },
+		 { match = {"MPlayer", "vlc" },  tag = "media"},
+
+		 { match = { "" },
+                   buttons = awful.util.table.join(
+                   awful.button({ }, 1, function (c) client.focus = c; c:raise() end),
+                   awful.button({ modkey }, 1, awful.mouse.client.move),
+                   awful.button({ modkey }, 3, awful.mouse.client.resize),
+              	   awful.button({ modkey }, 8, awful.mouse.client.resize))
+  }
 }
+
 
 -- tag defaults
 shifty.config.defaults = {
@@ -184,7 +192,6 @@ mydp.text = " | "
 memwidget2 = widget({ type = "textbox" })
 -- Register widget
 vicious.register(memwidget2, vicious.widgets.mem, " RAM: $1%", 13)
-
 
 -- Volume widget
 volwidget = widget({ type = "textbox" })
