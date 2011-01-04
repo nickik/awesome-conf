@@ -33,7 +33,8 @@ layouts =
 {
     awful.layout.suit.tile,
     awful.layout.suit.tile.bottom,
-    awful.layout.suit.max
+    awful.layout.suit.max,
+	awful.layout.suit.floating
 }
 
 
@@ -45,7 +46,8 @@ shifty.config.tags = {
 	["XChat"]  = { position = 4,  nopopup = true , layout = layouts[3]},
 	["Code"]  = { position = 3,  nopopup = true ,  layout = layouts[3]},
     ["gimp"] = { position = 5, exclusive = true, nopopup = true, spawn = gimp,  },
-	["media"]= { layout = awful.layout.suit.floating },
+	["media"]= { layout = layouts[4] },
+	["pdf"] = { layout = layouts[3]},
 }
 
 -- client settings
@@ -56,7 +58,7 @@ shifty.config.apps = {
 		 { match = { "emacs" }, tag = "Code" },
 		 { match = { "XChat" }, tag = "XChat" },
 		 { match = {"MPlayer", "vlc" },  tag = "media"},
-
+		 { match = {"xpdf", "pdf" }, tag = "pdf" },
 		 { match = { "" },
                    buttons = awful.util.table.join(
                    awful.button({ }, 1, function (c) client.focus = c; c:raise() end),
