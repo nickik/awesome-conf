@@ -34,20 +34,19 @@ layouts =
     awful.layout.suit.tile,
     awful.layout.suit.tile.bottom,
     awful.layout.suit.max,
-	awful.layout.suit.floating
+	awful.layout.suit.fair
 }
-
 
 -- {{{ Shifty configuration
 -- tag settings
 shifty.config.tags = {
-    ["main"] = { position = 1, exclusive = true, spawn = terminal, layout = layouts[1]},
-    ["web"]  = { position = 2, exclusive = true, spawn = browser,  layout = layouts[3] },
-	["XChat"]  = { position = 4,  nopopup = true , layout = layouts[3]},
-	["Code"]  = { position = 3,  nopopup = true ,  layout = layouts[3]},
-    ["gimp"] = { position = 5, exclusive = true, nopopup = true, spawn = gimp,  },
-	["media"]= { layout = layouts[4] },
-	["pdf"] = { layout = layouts[3]},
+    ["main"] ={ position = 1, layout = layouts[1], max_clients = 3, spawn = terminal },
+    ["web"]  ={ position = 2, exclusive = true, max_clients = 1,  spawn = browser,  layout = layouts[3], nopopup = true, },
+	["XChat"]={ position = 4 , nopopup = true , layout = layouts[3] },
+	["Code"] ={ position = 3,  nopopup = true ,  layout = layouts[3] },
+    ["gimp"] ={ position = 5, layout = awful.layout.suit.floating, nopopup = true, spawn = "gimp" },
+	["media"]={ layout = awful.layout.suit.floating, nopopup = true },
+	["pdf"] = { layout = layouts[3] },
 }
 
 -- client settings
@@ -71,9 +70,8 @@ shifty.config.apps = {
 
 -- tag defaults
 shifty.config.defaults = {
-  layout = awful.layout.suit.tile.bottom,
+  layout = awful.layout.suit.tile,
   ncol = 1,
-  mwfact = 0.60,
   floatBars=true,
 }
 
@@ -340,10 +338,6 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey,           }, "w", function () mymainmenu:show({keygrabber=true}) end),
 
     -- Layout manipulation
-    awful.key({ modkey, "Shift"   }, "j", function () awful.client.swap.byidx(  1)    end),
-    awful.key({ modkey, "Shift"   }, "k", function () awful.client.swap.byidx( -1)    end),
-    awful.key({ modkey, "Control" }, "j", function () awful.screen.focus_relative( 1) end),
-    awful.key({ modkey, "Control" }, "k", function () awful.screen.focus_relative(-1) end),
     awful.key({ modkey,           }, "u", awful.client.urgent.jumpto),
     awful.key({ modkey,           }, "Tab",
         function ()
@@ -366,6 +360,13 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, "Control" }, "l",     function () awful.tag.incncol(-1)         end),
     awful.key({ modkey,           }, "space", function () awful.layout.inc(layouts,  1) end),
     awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(layouts, -1) end),
+
+	-- Shift 
+	
+	awful.key({ modkey            }, "t",           function() shifty.add({ rel_index = 1 }) end),
+	awful.key({ modkey, "Control" }, "t",           function() shifty.add({ rel_index = 1, nopopup = true }) end),
+	awful.key({ modkey            }, "e",           shifty.rename),
+	awful.key({ modkey            }, "d",           shifty.del),
 
     -- Prompt
     awful.key({ modkey },            "r",     function () mypromptbox[mouse.screen]:run() end),
@@ -395,45 +396,6 @@ clientkeys = awful.util.table.join(
             c.maximized_vertical   = not c.maximized_vertical
         end)
 )
-
--- Compute the maximum number of digit we need, limited to 9
---keynumber = 0
---for s = 1, screen.count() do
---   keynumber = math.min(9, math.max(#tags[s], keynumber));
---end
---
----- Bind all key numbers to tags.
----- Be careful: we use keycodes to make it works on any keyboard layout.
----- This should map on the top row of your keyboard, usually 1 to 9.
---for i = 1, keynumber do
---    globalkeys = awful.util.table.join(globalkeys,
---        awful.key({ modkey }, "#" .. i + 9,
---                  function ()
---                        local screen = mouse.screen
---                        if tags[screen][i] then
---                            awful.tag.viewonly(tags[screen][i])
---                        end
---                  end),
---        awful.key({ modkey, "Control" }, "#" .. i + 9,
---                  function ()
---                      local screen = mouse.screen
---                      if tags[screen][i] then
---                          awful.tag.viewtoggle(tags[screen][i])
---                      end
---                  end),
---        awful.key({ modkey, "Shift" }, "#" .. i + 9,
---                  function ()
---                      if client.focus and tags[client.focus.screen][i] then
---                          awful.client.movetotag(tags[client.focus.screen][i])
---                      end
---                  end),
---        awful.key({ modkey, "Control", "Shift" }, "#" .. i + 9,
---                  function ()
---                      if client.focus and tags[client.focus.screen][i] then
---                          awful.client.toggletag(tags[client.focus.screen][i])
---                      end
---                  end))
---end
 
 -- {{{ bindings / global / shifty.getpos
 for i=1, ( shifty.config.maxtags or 9 ) do
@@ -477,66 +439,9 @@ shifty.config.globalkeys = globalkeys
 shifty.config.clientkeys = clientkeys
 -- }}}
 
--- {{{ Hooks
--- Hook function to execute when focusing a client.
---awful.hooks.focus.register(function (c)
---    if not awful.client.ismarked(c) then
---        c.border_color = beautiful.border_focus
---    end
---end)
---
----- Hook function to execute when unfocusing a client.
---awful.hooks.unfocus.register(function (c)
---    if not awful.client.ismarked(c) then
---        c.border_color = beautiful.border_normal
---    end
---end)
---
----- Hook function to execute when marking a client
---awful.hooks.marked.register(function (c)
---    c.border_color = beautiful.border_marked
---end)
---
----- Hook function to execute when unmarking a client.
---awful.hooks.unmarked.register(function (c)
---    c.border_color = beautiful.border_focus
---end)
---
----- Hook function to execute when the mouse enters a client.
---awful.hooks.mouse_enter.register(function (c)
---    -- Sloppy focus, but disabled for magnifier layout
---    if awful.layout.get(c.screen) ~= awful.layout.suit.magnifier
---        and awful.client.focus.filter(c) then
---        client.focus = c
---    end
---end)
-
--- Hook function to execute when arranging the screen.
--- (tag switch, new client, etc)
---awful.hooks.arrange.register(function (screen)
---    local layout = awful.layout.getname(awful.layout.get(screen))
---    if layout and beautiful["layout_" ..layout] then
---        mylayoutbox[screen].image = image(beautiful["layout_" .. layout])
---    else
---        mylayoutbox[screen].image = nil
---    end
---
---    -- Give focus to the latest client in history if no window has focus
---    -- or if the current window is a desktop or a dock one.
---    if not client.focus then
---        local c = awful.client.focus.history.get(screen, 0)
---        if c then client.focus = c end
---    end
---end)
-
--- }}}
-
 -- {{{ Signals
 -- Signal function to execute when a new client appears.
 client.add_signal("manage", function (c, startup)
-    -- Add a titlebar
-    -- awful.titlebar.add(c, { modkey = modkey })
-
     -- Enable sloppy focus
     c:add_signal("mouse::enter", function(c)
         if awful.layout.get(c.screen) ~= awful.layout.suit.magnifier
@@ -544,12 +449,16 @@ client.add_signal("manage", function (c, startup)
             client.focus = c
         end
     end)
+	
+	if not c.icon and theme.default_client_icon then
+		c.icon = image(theme.default_client_icon)
+	end
 
     if not startup then
-        -- Set the windows at the slave,
-        -- i.e. put it at the end of others instead of setting it master.
-        -- awful.client.setslave(c)
-
+        --Set the windows at the slave,
+        --i.e. put it at the end of others instead of setting it master.
+        --awful.client.setslave(c)
+	 
         -- Put windows in a smart way, only if they does not set an initial position.
         if not c.size_hints.user_position and not c.size_hints.program_position then
             awful.placement.no_overlap(c)
@@ -563,7 +472,6 @@ client.add_signal("focus", function(c) c.border_color = beautiful.border_focus e
 client.add_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
 -- }}}
 
--- }}}
 client.add_signal("focus", function(c)
   c.border_color = beautiful.border_focus
   if c.opacity < 1.0 then
